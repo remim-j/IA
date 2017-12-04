@@ -1,16 +1,25 @@
-# load train and test data
+# Projet Intelligence Artificielle
+# Quentin DA SILVA, William DEVOUARD, Rémi MARIE-JEANNE
+# TELECOM Nancy 3A IAMD & IL
+# Le 07/12/2017
+
+# Chargement des données d'apprentissage et des données de test
 data.train = read.csv("datatrain.csv")
 data.test = read.csv("datatest.csv")
 
-# overlap test set with train set so we have all features for both 
-#data.test = data.train[which(data.train$Version.key %in% data.test$Versionkey),]
-
+# Vérification sur les dimensions des 2 jeux de données
 dim(data.train)
-
 dim(data.test)
 
-# set up feature list 
+# Sélection de l'attribut y
 y = "y"
+
+# Sélection des poids des arguments de la régression
+weights = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+
+# Sélection des arguments
 features = c("arg1", "arg2", "arg3", "arg4", "arg5", "arg6", "arg7", "arg8", "arg9", "arg10",
              "arg11", "arg12", "arg13", "arg14", "arg15", "arg16", "arg17", "arg18", "arg19", "arg20",
              "arg21", "arg22", "arg23", "arg24", "arg25", "arg26", "arg27", "arg28", "arg29", "arg30",
@@ -21,47 +30,83 @@ features = c("arg1", "arg2", "arg3", "arg4", "arg5", "arg6", "arg7", "arg8", "ar
              "arg71", "arg72", "arg73", "arg74", "arg75", "arg76", "arg77", "arg78", "arg79", "arg80",
              "arg81", "arg82", "arg83", "arg84", "arg85", "arg86", "arg87", "arg88", "arg89", "arg90")
 
-test.size = 80
-num.iterations = 20
+# Fonction permettant de concaténer les vecteurs de poids et d'arguments
+concatWeightsFeatures <- function(wei, feat){
+  
+  res = c()
+  
+  for (i in 1:length(wei)) {
+    
+      #res = append(res, paste(paste(wei[i], " * "), feat[i]))
+      res = append(res, feat[i])
+  }
+  
+  return(res)
+}
 
+# Vecteur des arguments pondérés
+weightedFeatures <- concatWeightsFeatures(weights, features)
+
+# Nombre de chansons dans l'échantillon selectionné
+test.size = 50000
+
+# Nombre d'échantillons testés :
+num.iterations = 1
+
+# Erreur moyenne (en nombre d'années)
+errMoy = 0
+
+# Initialisation des objects pour le reporting des résultats
 summary.results = {}
 all.results = {}
+
 for (i in 1:num.iterations) {
   
-  # randomly sample 40 points from their test set and deduct from train set
+  # On sélectionne aléatoirement test.size chansons dans les données de test
   ind1 = sample(x = nrow(data.test), size = test.size, replace = FALSE)
   data.test.sub = data.test[ind1,]
   
-  #ind2 = which(data.train$Version.key %in% data.test.sub$Version.key)
-  #data.train.sub = data.train[-ind2,]
-  data.train.sub = data.train
+  # Calcul du model linéaire à partir des données d'apprentissage
+  model = lm(formula = paste(y, paste(weightedFeatures, collapse=" + "), sep=" ~ "), data=data.train.sub)
   
-  # model train set using features
-  model = lm(formula = paste(y, paste(features, collapse=" + "), sep=" ~ "), data=data.train.sub)
+  # Les résultats du model linéaire
+  summary(model)
   
-  # predict test set 
+  # Affichage graphique
+  opar <- par(mfrow = c(2,2), oma = c(0, 0, 1.1, 0))
+  plot(model, las = 1)
+  par(opar)
+  
+  # Prédiction sur le jeu de test
   predicted = predict(model, data.test.sub)
+  
+  # Valeurs actuelles des années de sorties des chansons
   actual = data.test.sub[,y]
-  
-  # calculate one mape for every single prediction you made (i.e. 40 mapes)
-  mape = (abs((actual-predicted)/actual))*100
-  
-  # collect results for reporting
+
+  # Calcul de l'erreur moyenne
+  mape = abs(actual-predicted)
+          
+  # Collecte des résultats
   summary.results = rbind(summary.results, mean(mape))
   all.results = rbind(all.results, cbind(i, actual, predicted, mape))
   
+  # Affichage de l'erreur moyenne
+  errMoy = mean(mape)
+  cat("Erreur moyenne itération ", i, " : ", errMoy, "\n")
 }
 
-# set row and column names
-rownames(summary.results) = c(1:20)
+rownames(summary.results) = c(1:num.iterations)
 colnames(summary.results) = c("mean.MAPE")
-rownames(all.results) = c(1:1600)
+rownames(all.results) = c(1:(test.size*num.iterations))
 colnames(all.results) = c("i", "actual", "predicted", "mape")
 
-# round to whole percentages
-summary.results[,"mean.MAPE"] = round(summary.results[,"mean.MAPE"], digits=0)
-all.results[,"mape"] = round(all.results[,"mape"], digits=0)
+# Arrondis des valeurs résultats et erreurs
+summary.results[,"mean.MAPE"] = round(summary.results[,"mean.MAPE"], digits=3)
+all.results[,"mape"] = round(all.results[,"mape"], digits=3)
+all.results[,"predicted"] = round(all.results[,"predicted"], digits=0)
 
-# write results to file
-write.csv(summary.results, "./summary.results.csv", row.names=F)
-write.csv(all.results, "./all.mape.results.csv", row.names=F)
+# Creation de fichiers CSV avec les résultats de la prédiction
+file.remove("./errMoy.csv")
+write.csv(summary.results, "./errMoy.csv", row.names=F)
+file.remove("./results.csv")
+write.csv(all.results, "./results.csv", row.names=F)
