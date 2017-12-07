@@ -3,7 +3,7 @@
 # TELECOM Nancy 3A IAMD & IL
 # Le 07/12/2017
 
-# Modèle polynomial
+# Modèle multi-linéaire 2
 
 # Chargement des données d'apprentissage et des données de test
 data.train = read.csv("datatrain.csv")
@@ -13,19 +13,10 @@ data.test = read.csv("datatest.csv")
 dim(data.train)
 dim(data.test)
 
-# Sélection de l'attribut y
-y = "y"
-
 # Sélection des poids des arguments de la régression
 weights = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-weights2 = c(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
-weights3 = c(3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-             3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-             3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3)
 
 # Sélection des arguments
 features = c("arg1", "arg2", "arg3", "arg4", "arg5", "arg6", "arg7", "arg8", "arg9", "arg10",
@@ -37,19 +28,6 @@ features = c("arg1", "arg2", "arg3", "arg4", "arg5", "arg6", "arg7", "arg8", "ar
              "arg61", "arg62", "arg63", "arg64", "arg65", "arg66", "arg67", "arg68", "arg69", "arg70",
              "arg71", "arg72", "arg73", "arg74", "arg75", "arg76", "arg77", "arg78", "arg79", "arg80",
              "arg81", "arg82", "arg83", "arg84", "arg85", "arg86", "arg87", "arg88", "arg89", "arg90")
-
-# Fonction permettant de concaténer les vecteurs de poids et d'arguments
-concatWeightsFeatures <- function(wei, feat){
-  
-  res = c()
-  
-  for (i in 1:length(features)) {
-    
-    res = append(res, paste("poly(", feat[i], ",", wei[i], ")"))
-  }
-  
-  return(res)
-}
 
 confusionMatrix <- function(actual, predicted) {
   
@@ -150,13 +128,10 @@ confusionMatrix <- function(actual, predicted) {
   return(xRes)
 }
 
-# Vecteur des arguments pondérés
-weightedFeatures <- concatWeightsFeatures(weights2, features)
-
 # Nombre de chansons dans l'échantillon selectionné
-test.size = 30000
+test.size = 50000
 
-# Nombre d'échantillons testés
+# Nombre d'échantillons testés :
 num.iterations = 1
 
 # Erreur moyenne (en nombre d'années)
@@ -172,45 +147,44 @@ for (i in 1:num.iterations) {
   ind1 = sample(x = nrow(data.train), size = test.size, replace = FALSE)
   data.train.sub = data.train[ind1,]
   
-  #ind2 = sample(x = nrow(data.test), size = 200, replace = FALSE)
-  data.test.sub = data.test#[ind2,]
-  
   # Calcul du model linéaire à partir des données d'apprentissage
-  model = lm(formula = paste(y, paste(weightedFeatures, collapse = " + "), sep = " ~ "), data = data.train.sub)
+  arg1 <- data.train.sub[, 'arg1']
+  arg2 <- data.train.sub[, 'arg2']
+  arg3 <- data.train.sub[, 'arg3']
+  arg4 <- data.train.sub[, 'arg4']
+  arg5 <- data.train.sub[, 'arg5']
+  arg6 <- data.train.sub[, 'arg6']
+  arg7 <- data.train.sub[, 'arg7']
+  arg8 <- data.train.sub[, 'arg8']
+  arg9 <- data.train.sub[, 'arg9']
+  arg10 <- data.train.sub[, 'arg10']
+  arg11 <- data.train.sub[, 'arg11']
+  arg12 <- data.train.sub[, 'arg12']
+  y <- data.train.sub[, 'y']
+  model = nls(y ~ a + b*arg1 + c*arg2 + d*arg3 + e*arg4 + f*arg5 + g*arg6 + h*arg7 + i*arg8 + j*arg9 + k*arg10 + l*arg11 + m*arg12, start = list(a = 1900, b = 1, c = 1, d = 1, e = 1, f = 1, g = 1, h = 1, i = 1, j = 1, k = 1, l = 1, m = 1))
   
   # Les résultats du model linéaire
   summary(model)
   
-  # Affichage graphique
-  opar <- par(mfrow = c(2,2), oma = c(0, 0, 1.1, 0))
-  plot(model, las = 1)
-  par(opar)
-  
   # Prédiction sur le jeu de test
-  train.predicted = predict(model, data.train.sub)
-  test.predicted = predict(model, data.test.sub)
+  predicted = predict(model, data.test)
   
   # Valeurs actuelles des années de sorties des chansons
-  train.actual = data.train.sub[, y]
-  test.actual = data.test.sub[, y]
-  
+  actual = data.test[, 'y']
+
   # Calcul de l'erreur moyenne
-  train.mape = abs(train.actual - train.predicted)
-  test.mape = abs(test.actual - test.predicted)
+  mape = abs(actual - predicted)
+          
+  # Collecte des résultats
+  summary.results = rbind(summary.results, mean(mape))
+  all.results = rbind(all.results, cbind(i, actual, predicted, mape))
   
   # Affichage de l'erreur moyenne
-  train.errMoy = mean(train.mape)
-  test.errMoy = mean(test.mape)
-  cat("Train : Erreur moyenne itération ", i, " : ", train.errMoy, "\n")
-  cat("Test : Erreur moyenne itération ", i, " : ", test.errMoy, "\n")
+  errMoy = mean(mape)
+  cat("Erreur moyenne itération ", i, " : ", errMoy, "\n")
   
-  plot(test.actual, col = "blue")
-  points(test.predicted, col = "red")
-  
-  # Collecte des résultats
-  summary.results = rbind(summary.results, test.errMoy)
-  all.results = rbind(all.results, cbind(i, test.actual, test.predicted, test.mape))
-
+  plot(actual, col = "blue")
+  points(predicted, col = "red")
 }
 
 rownames(summary.results) = c(1:num.iterations)
@@ -219,7 +193,7 @@ rownames(all.results) = c(1:51630)
 colnames(all.results) = c("i", "actual", "predicted", "mape")
 
 # Arrondis des valeurs résultats et erreurs
-summary.results[, "mean.MAPE"] = round(summary.results[,"mean.MAPE"], digits = 3)
+summary.results[, "mean.MAPE"] = round(summary.results[, "mean.MAPE"], digits = 3)
 all.results[, "mape"] = round(all.results[, "mape"], digits = 3)
 all.results[, "predicted"] = round(all.results[, "predicted"], digits = 0)
 
